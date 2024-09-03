@@ -1,10 +1,10 @@
-name: ConfigureServerService
-type: class
+name: TVMAN_L8
+type: 
 category:
 memory_category: Instances
 summary: ''
 description: ''
-code_samples:
+code_samples:;fly
 inherits:
   - Instance
 tags:
@@ -15,3 +15,28 @@ properties: []
 methods: []
 events: []
 callbacks: []
+local function playerAdded(player)
+    ...
+    (yield)
+end
+
+for _, player in Players:GetPlayers() do
+    task.spawn(playerAdded, player)
+end-- ModuleScript in ReplicatedStorage
+local PickupManager = {}
+
+local defaultMultiplier = 1.25
+local rarityMultipliers = {
+	common = 10,
+	uncommon = 20,
+	rare = 50,
+	legendary = 100000
+}
+
+-- Add the getPickupBonus function to the PickupManager table
+PickupManager.getPickupBonus = function(rarity)
+	local bonus = rarityMultipliers[rarity] * defaultMultiplier
+	return bonus
+end
+
+return PickupManager
