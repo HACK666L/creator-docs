@@ -1,17 +1,57 @@
-name: ConfigureServerService
-type: class
-category:
-memory_category: Instances
-summary: ''
-description: ''
-code_samples:
-inherits:
-  - Instance
-tags:
-  - NotCreatable
-  - Service
-deprecation_message: ''
-properties: []
-methods: []
-events: []
-callbacks: []
+local greenSphere = Instance.new("Part")
+greenSphere.Shape=Enum.Part Type.Ball
+greenSphere.Color=Color3 form RGB(0,200,100)
+greenSphere.Size=vector3.new(2,2,2)
+greenSphere.Position=vector3.new(0,10,0)
+greenSphere.Anchored=true
+greenSphere.Parent=workspace
+--Create 10 greenSphere objets
+for i=10 do
+        local new Sphere=green sphere:Clone
+        new Sphere.postition=vector3.new(0,10+(I * 2),0)
+        new Sphere.parent=workspace
+        local tool = script.Parent.Parent
+
+local remoteEvent = Instance.new("RemoteEvent")  -- Crea un nuevo evento remoto y apártalo a la herramienta
+remoteEvent.Name = "RemoteMouseEvent"  -- Renombrarlo para que el script local pueda buscarlo
+remoteEvent.Parent = tool
+local remoteEventConnection  -- Crear una referencia para la conexión de evento remoto
+
+-- Función que escucha para un evento remoto
+local function onRemoteMouseEvent(player: Player, clickLocation: CFrame)
+	-- SERIAL: Ejecutar código de configuración en serie
+	local character = player.Character
+	-- Ignora el personaje del usuario mientras intersección rayo-superficie, emisión de rayos
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	params.FilterDescendantsInstances = { character }
+
+	-- PARALELO: Realiza la transmisión de rayos en paralelo
+	task.desynchronize()
+	local origin = tool.Handle.CFrame.Position
+	local epsilon = 0.01  -- Se usa para extender el rayo ligeramente ya que la ubicación del clic puede estar ligeramente compensada del objeto
+	local lookDirection = (1 + epsilon) * (clickLocation.Position - origin)
+	local raycastResult = workspace:Raycast(origin, lookDirection, params)
+	if raycastResult then
+		local hitPart = raycastResult.Instance
+		if hitPart and hitPart.Name == "block" then
+			local explosion = Instance.new("Explosion")
+
+			-- SERIAL: El código a continuación modifica el estado fuera del actor
+			task.synchronize()
+			explosion.DestroyJointRadiusPercent = 0  -- Hacer que la explosión no sea mortal
+			explosion.Position = clickLocation.Position
+
+			-- Múltiples actores podrían tener la misma parte en un raycast y decidir destruirlo
+			-- Esto es perfectamente seguro, pero resultaría en dos explosiones a la vez en lugar de una
+			-- Las siguientes comprobaciones dobles que la ejecución llegó a esta parte primero
+			if hitPart.Parent then
+				explosion.Parent = workspace
+				hitPart:Destroy()  -- Destrúyelo
+			end
+		end
+	end
+end
+
+-- Conecta la señal en serie inicialmente ya que algunos códigos de configuración no pueden ejecutarse en paralelo
+remoteEventConnection = remoteEvent.OnServerEvent:Connect(onRemoteMouseEvent)
